@@ -47,7 +47,7 @@ bool Framework::config() {
         return false;
     }
 
-    servers_ = new Server[serCnt_];
+    servers_ = new Server[serCnt_ + 1];
 
     if (!servers_) {
         LOG_FATAL << "alloc memory failed";
@@ -59,6 +59,11 @@ bool Framework::config() {
         if (!servers_[i].config()) {
             return false;
         }
+    }
+
+    servers_[serCnt_].setName(CTRLSERNAME);
+    if (!servers_[serCnt_].config()) {
+        return false;
     }
 
     return true;

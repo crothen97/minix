@@ -24,6 +24,8 @@ public:
 
     void setName(std::string& name);
 
+    void setName(const char* name);
+
     const std::string getName() const {return  name_;}
 
     bool config();

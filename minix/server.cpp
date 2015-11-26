@@ -1,7 +1,7 @@
 #include "minix/server.h"
-#include "minihttp/framework.h"
-#include "httprequest.h"
-#include "minihttp/module.h"
+#include "minix/framework.h"
+#include "minix/httprequest.h"
+#include "minix/module.h"
 
 using namespace ikk;
 
@@ -20,29 +20,43 @@ void Server::setName(std::string& name) {
     name_.swap(name);
 }
 
+void Server::setName(const char* name) {
+    name_ = name;
+}
+
 bool Server::config() {
     if (!configer) {
         return false;
     }
 
-    ConfigSubObj_ptr obj = configer->getSubObject(name_.c_str());
-
-    qint32 tmp;
-    if (obj->getInt("port", tmp)) {
-        port_ = (quint16) tmp;
+    if (name_.compare(CTRLSERNAME) == 0) {
+        port_ = 5097;
+        timeout_ = 20;
+        module_ = Module::find("ctrlmod");
+        if (!module_) {
+            LOG_ERROR << "cannot find ctrlmod";
+            return false;
+        }
     } else {
-        port_ = 0;
-        LOG_ERROR << "get port failed, server name is " << name_;
-        return false;
-    }
+        ConfigSubObj_ptr obj = configer->getSubObject(name_.c_str());
 
-    if (obj->getInt("timeout", tmp)) {
-        timeout_ = tmp;
-    }
+        qint32 tmp;
+        if (obj->getInt("port", tmp)) {
+            port_ = (quint16) tmp;
+        } else {
+            port_ = 0;
+            LOG_ERROR << "get port failed, server name is " << name_;
+            return false;
+        }
 
-    module_ = Module::find(obj->getString("module"));
-    if (!module_) {
-        module_ = Module::find("default");
+        if (obj->getInt("timeout", tmp)) {
+            timeout_ = tmp;
+        }
+
+        module_ = Module::find(obj->getString("module"));
+        if (!module_) {
+            module_ = Module::find("default");
+        }
     }
 
     return module_->config();
