@@ -39,7 +39,6 @@ void HttpResponse::get(ikk::MStream& response) {
 
         case S_404_NotFound:
             ms << "200 OK";
-            // TODO body_ << "404 Not Found";
             break;
 
         default:

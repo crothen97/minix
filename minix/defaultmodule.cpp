@@ -24,13 +24,11 @@ bool DefaultModule::handle(Event* ev, char* buf, int len) {
         return false;
     }
 
-    HttpResponse res;
     req.path().replaceFirst('?', '\0');
     MStream localPath;
     localPath << htmlPath_ << req.path();
 
-    LOG_INFO << localPath;
-
+    HttpResponse res;
     ssize_t bodyLen = 0;
     if (Path::exists(localPath.data())) {
         KIFStream kifs(localPath.data());
@@ -38,8 +36,6 @@ bool DefaultModule::handle(Event* ev, char* buf, int len) {
         if (bodyLen > 0) {
             res.setStatus(HttpResponse::S_200_OK);
             res.setContentType(HttpResponse::CT_HTML);
-            res.setBody(buf_, (size_t) bodyLen);
-            LOG_INFO << "=============" << bodyLen;
         } else {
             bodyLen = 0;
             LOG_WARN << "read " << localPath << " failed";
@@ -48,12 +44,16 @@ bool DefaultModule::handle(Event* ev, char* buf, int len) {
         LOG_WARN << "not exist";
     }
 
-    MStream ms(((size_t) bodyLen & 0xfff) + 0x1000);
+    MStream ms(((size_t) bodyLen & (~0xfff)) + 0x2000);
+
     res.get(ms);
+    if (bodyLen > 0) {
+        res.setBody(ms, buf_, (size_t) bodyLen);
+    } else {
+        res.setBody(ms, "404 Not Found");
+    }
 
     ev->clearBuf();
-
-    LOG_INFO << ms;
 
     ev->send(ms.data(), ms.size());
     if (!res.keepalive()) {

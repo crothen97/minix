@@ -2,15 +2,18 @@
 #include "minix/framework.h"
 #include "minix/defaultmodule.h"
 #include "minix/ctrlmodule.h"
+#include "minix/jbactmodule.h"
 
 namespace ikk {
 
 static DefaultModule theDefaultModule;
 static CtrlModule theCtrlModule;
+static JbactModule theJbactModule;
 
 Module* modulesArr[] = {
         &theDefaultModule,
         &theCtrlModule,
+        &theJbactModule,
         NULL
 };
 
