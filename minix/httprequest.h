@@ -35,6 +35,8 @@ public:
 
     void setMethod(Method method) { method_ = method; }
 
+    bool parse(const char* buf, size_t len);
+
     bool parseReqLine(const char* buf, size_t len);
 
     void parseHeader(const char* buf, size_t len);
@@ -53,11 +55,11 @@ public:
 
     const HeadMap& headers() const { return headers_; }
 
-    const ikk::MStream& path() const { return path_; }
+    MStream& path() { return path_; }
 
 private:
     Method method_;
-    ikk::MStream path_;
+    MStream path_;
     HeadMap headers_;
     bool keepAlive_;
 };

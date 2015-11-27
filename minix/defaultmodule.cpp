@@ -1,50 +1,84 @@
 #include <ikkcpr/strutil.h>
 #include <ikkcpr/logging.h>
 #include <ikkcpr/event.h>
+#include <ikkcpr/path.h>
+#include <ikkcpr/kifstream.h>
 
 #include "minix/defaultmodule.h"
 #include "minix/httprequest.h"
 #include "minix/httpresponse.h"
+#include "minix/framework.h"
 
 using namespace ikk;
 
-DefaultModule::DefaultModule() : Module("default") {}
+#define BUFSIZE (1024 * 256)
+
+DefaultModule::DefaultModule() : Module("defaultmod") {
+    buf_ = new char[BUFSIZE];
+    CHECK_FAIL(buf_, "new char array failed");
+}
 
 bool DefaultModule::handle(Event* ev, char* buf, int len) {
-    size_t idxs[128];
-    size_t count = 0;
-
-    finds(buf, "\r\n", idxs, &count);
-
-    if (!count) {
-        LOG_ERROR << "parse failed\n";
-        return false;
-    }
-
     HttpRequest req;
-    if (!req.parseReqLine(buf, idxs[0])) {
+    if (!req.parse(buf, len)) {
         return false;
-    }
-
-    const char* start = buf + idxs[0] + 2;
-    for (size_t i = 1; i < count; ++i) {
-        req.parseHeader(start, idxs[i] - idxs[i - 1] - 2);
-        start = buf + idxs[i] + 2;
     }
 
     HttpResponse res;
-    if (req.path().equal("/")) {
-        res.setStatus(HttpResponse::S_200_OK);
-        res.setContentType(HttpResponse::CT_HTML);
-        res.setBody("welcom to ikkcpr http server!");
+    req.path().replaceFirst('?', '\0');
+    MStream localPath;
+    localPath << htmlPath_ << req.path();
+
+    LOG_INFO << localPath;
+
+    ssize_t bodyLen = 0;
+    if (Path::exists(localPath.data())) {
+        KIFStream kifs(localPath.data());
+        bodyLen = kifs.read(buf_, BUFSIZE);
+        if (bodyLen > 0) {
+            res.setStatus(HttpResponse::S_200_OK);
+            res.setContentType(HttpResponse::CT_HTML);
+            res.setBody(buf_, (size_t) bodyLen);
+            LOG_INFO << "=============" << bodyLen;
+        } else {
+            bodyLen = 0;
+            LOG_WARN << "read " << localPath << " failed";
+        }
+    } else {
+        LOG_WARN << "not exist";
     }
 
-    MStream ms;
+    MStream ms(((size_t) bodyLen & 0xfff) + 0x1000);
     res.get(ms);
+
+    ev->clearBuf();
+
+    LOG_INFO << ms;
 
     ev->send(ms.data(), ms.size());
     if (!res.keepalive()) {
         ev->shutdownAll();
+    }
+
+    return true;
+}
+
+bool DefaultModule::config() {
+    if (!configer) {
+        return false;
+    }
+
+    ConfigSubObj_ptr obj = configer->getSubObject(name_.c_str());
+
+    if (!obj) {
+        LOG_ERROR << "get " << name_ << " module failed";
+        return false;
+    }
+
+    htmlPath_ = obj->getString("path");
+    if (htmlPath_.empty()) {
+        LOG_ERROR << "path is not set";
+        return false;
     }
 
     return true;

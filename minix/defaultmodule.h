@@ -5,8 +5,6 @@
 
 namespace ikk {
 
-class HttpRequest;
-
 class DefaultModule : public Module {
 public:
     DefaultModule();
@@ -14,6 +12,12 @@ public:
     virtual ~DefaultModule() {}
 
     virtual bool handle(Event* ev, char* buf, int len);
+
+    virtual bool config();
+
+private:
+    std::string htmlPath_;
+    char* buf_;
 };
 }
 

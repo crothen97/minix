@@ -1,13 +1,16 @@
 #include "minix/module.h"
 #include "minix/framework.h"
 #include "minix/defaultmodule.h"
+#include "minix/ctrlmodule.h"
 
 namespace ikk {
 
 static DefaultModule theDefaultModule;
+static CtrlModule theCtrlModule;
 
 Module* modulesArr[] = {
         &theDefaultModule,
+        &theCtrlModule,
         NULL
 };
 

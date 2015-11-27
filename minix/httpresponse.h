@@ -35,19 +35,21 @@ public:
 
     void setContentType(ContentType type);
 
-    void setBody(const char* body) { body_ << body; }
+    void setBody(MStream& ms, const char* body) { ms << "Content-Length: " << strlen(body) << "\r\n\r\n" << body; }
 
-    void setBody(ikk::MStream& body) { body_ << body; }
+    void setBody(MStream& ms, const char* body, size_t len) { ms << "Content-Length: " << len << "\r\n\r\n" << body; }
 
-    void resetBody() { body_.reset(); }
+    void setBody(MStream& ms, ikk::MStream& body) { ms << "Content-Length: " << body.size() << "\r\n\r\n" << body; }
+
+    // void resetBody() { body_.reset(); }
 
     Status status() const { return status_; }
 
 private:
-    ikk::MStream headers_;
+    MStream headers_;
     Status status_;
     bool keepAlive_;
-    ikk::MStream body_;
+    // ikk::MStream body_;
 };
 
 }

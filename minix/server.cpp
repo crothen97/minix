@@ -5,8 +5,6 @@
 
 using namespace ikk;
 
-extern Framework* theFramework;
-
 Server::Server() {
     timeout_ = -1;
     module_ = NULL;
@@ -29,34 +27,24 @@ bool Server::config() {
         return false;
     }
 
-    if (name_.compare(CTRLSERNAME) == 0) {
-        port_ = 5097;
-        timeout_ = 20;
-        module_ = Module::find("ctrlmod");
-        if (!module_) {
-            LOG_ERROR << "cannot find ctrlmod";
-            return false;
-        }
+    ConfigSubObj_ptr obj = configer->getSubObject(name_.c_str());
+
+    qint32 tmp;
+    if (obj->getInt("port", tmp)) {
+        port_ = (quint16) tmp;
     } else {
-        ConfigSubObj_ptr obj = configer->getSubObject(name_.c_str());
+        port_ = 0;
+        LOG_ERROR << "get port failed, server name is " << name_;
+        return false;
+    }
 
-        qint32 tmp;
-        if (obj->getInt("port", tmp)) {
-            port_ = (quint16) tmp;
-        } else {
-            port_ = 0;
-            LOG_ERROR << "get port failed, server name is " << name_;
-            return false;
-        }
+    if (obj->getInt("timeout", tmp)) {
+        timeout_ = tmp;
+    }
 
-        if (obj->getInt("timeout", tmp)) {
-            timeout_ = tmp;
-        }
-
-        module_ = Module::find(obj->getString("module"));
-        if (!module_) {
-            module_ = Module::find("default");
-        }
+    module_ = Module::find(obj->getString("module"));
+    if (!module_) {
+        module_ = Module::find("defaultmod");
     }
 
     return module_->config();

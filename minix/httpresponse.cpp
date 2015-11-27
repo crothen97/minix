@@ -1,3 +1,4 @@
+#include <ikkcpr/logging.h>
 #include "minix/httpresponse.h"
 
 using namespace ikk;
@@ -38,7 +39,7 @@ void HttpResponse::get(ikk::MStream& response) {
 
         case S_404_NotFound:
             ms << "200 OK";
-            body_ << "404 Not Found";
+            // TODO body_ << "404 Not Found";
             break;
 
         default:
@@ -53,6 +54,4 @@ void HttpResponse::get(ikk::MStream& response) {
     } else {
         response << "Connection: close\r\n";
     }
-
-    response << "Content-Length: " << body_.size() << "\r\n\r\n" << body_.data();
 }

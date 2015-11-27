@@ -5,5 +5,5 @@ from gmake import Makefile as mf
 
 mf().out('out').headers(['minix']).srcs(['minix']) \
     .incpaths(['./']).debug(False).cxx11() \
-    .libs(('ikkcpr', 'pthread', 'pcre')) \
+    .libs(('ikkcpr_static', 'pthread', 'pcre')) \
     .target('minix.out').write("Makefile")

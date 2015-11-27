@@ -6,9 +6,12 @@ using std::string;
 
 namespace ikk {
 
-ikk::Config* configer = NULL;
+Config* configer = NULL;
+
+Framework* theFramework = NULL;
 
 Framework::Framework() {
+    bDeamon_ = false;
     servers_ = NULL;
 }
 
@@ -39,6 +42,8 @@ bool Framework::config() {
         }
     }
 
+    configer->getBool("deamon", bDeamon_);
+
     vector<string> vs = configer->getStringVector("servers");
     serCnt_ = vs.size();
 
@@ -47,7 +52,7 @@ bool Framework::config() {
         return false;
     }
 
-    servers_ = new Server[serCnt_ + 1];
+    servers_ = new Server[serCnt_];
 
     if (!servers_) {
         LOG_FATAL << "alloc memory failed";
@@ -57,13 +62,9 @@ bool Framework::config() {
     for (int i = 0; i < serCnt_; ++i) {
         servers_[i].setName(vs[i]);
         if (!servers_[i].config()) {
+            LOG_ERROR << servers_->getName() << " config failed";
             return false;
         }
-    }
-
-    servers_[serCnt_].setName(CTRLSERNAME);
-    if (!servers_[serCnt_].config()) {
-        return false;
     }
 
     return true;
@@ -83,6 +84,10 @@ void Framework::start() {
     }
 
     base_.dispatch();
+}
+
+void Framework::stop() {
+    base_.stop();
 }
 
 }

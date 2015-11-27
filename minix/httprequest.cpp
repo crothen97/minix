@@ -72,6 +72,31 @@ void HttpRequest::addHead(Head type, const char* content) {
     headers_[type] << content;
 }
 
+bool HttpRequest::parse(const char* buf, size_t len) {
+    size_t idxs[128];
+    int count = 128;
+    finds(buf, len, "\r\n", idxs, &count);
+
+    if (!count) {
+        LOG_ERROR << "parse failed\n";
+        return false;
+    }
+
+    if (!parseReqLine(buf, idxs[0])) {
+        return false;
+    }
+
+    for (size_t i = 1; i < count; ++i) {
+        size_t idxPreLst = idxs[i - 1] + 2;
+        parseHeader(buf + idxPreLst, idxs[i] - idxPreLst);
+    }
+
+    size_t idxEndLst = idxs[count - 1] + 2;
+    parseHeader(buf + idxEndLst, len - idxEndLst);
+
+    return true;
+}
+
 bool HttpRequest::parseReqLine(const char* buf, size_t len) {
     const char* end = buf + len;
 
